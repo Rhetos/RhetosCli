@@ -1,20 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RhetosCLI.Attributes;
+using RhetosCLI.Helpers;
+using RhetosCLI.Interfaces;
 
 namespace RhetosCLI.Commands
 {
-    public static class CreateApp
+    public class Rhetos : ICliCommand
     {
-        
-        public static void Create(string rhetosVersion , string siteName, string appPoolName, string userName,string password,bool useWindowsAuth)
+        [CliCommand("Create", "Creates new rhetos instance")]
+        public static void Create(string rhetosVersion, string siteName, string appPoolName, string userName, string password, bool useWindowsAuth)
         {
-            Helpers.WriteLine("Creating app {0} with rhetos {1}",appPoolName,rhetosVersion);
+            MiscHelpers.WriteLine("Creating app {0} with rhetos {1}", appPoolName, rhetosVersion);
             var enable32Bit = string.Compare(rhetosVersion, "v1.1") != 1;
-            var path  = Releases.DownloadRhetosRelease(rhetosVersion);
-            IIS.CreateWebSite(siteName, appPoolName, userName, password, path, enable32Bit,useWindowsAuth);
+            var path = Releases.DownloadRhetosRelease(rhetosVersion);
+            IIS.CreateWebSite(siteName, appPoolName, userName, password, path, enable32Bit, useWindowsAuth);
             //Database.CreateDatabase
             //Rhetos.Deploy
             /*
@@ -30,7 +28,14 @@ The output may include "[Error] DeploymentConfiguration: No packages" and "[Erro
             //
         }
 
+        public bool Execute(CliCommandParams cmdParams)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ShowHelp()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
-
-

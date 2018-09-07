@@ -5,3 +5,5 @@
 /.vs/RhetosCLI/v15/Server/sqlite3
 /RhetosCLI/bin/Debug
 /RhetosCLI/obj/Debug
+*.suo
+/packages

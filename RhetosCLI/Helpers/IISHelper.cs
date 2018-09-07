@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace RhetosCLI
+namespace RhetosCLI.Helpers
 {
     public static class IIS
     {
@@ -58,7 +58,7 @@ namespace RhetosCLI
                 //must commit before changing security mode
                 serverManager.CommitChanges();
                 SetAuthMode(enableWindowsAuth, serverManager, iisAppName, app);
-                Helpers.WriteLine("App {0} created, it is using {1} app pool.", ConsoleColor.Green, appName, appPoolName);
+                MiscHelpers.WriteLine("App {0} created, it is using {1} app pool.", ConsoleColor.Green, appName, appPoolName);
             }
             else
             {
@@ -81,11 +81,10 @@ namespace RhetosCLI
                 ///TODO Skip the following steps if you are using a Windows domain account.
 
                 ///TODO Modify the RhetosAppPool to use built-in account "ApplicationPoolIdentity", instead of the developers domain account(Advanced Settings => Identity). This is the default user for a new app pool.
-
             }
             else
             {
-                Helpers.WriteLine("App pool {0} exists, it wil be reused.", ConsoleColor.Yellow, appPoolName);
+                MiscHelpers.WriteLine("App pool {0} exists, it wil be reused.", ConsoleColor.Yellow, appPoolName);
             }
         }
 

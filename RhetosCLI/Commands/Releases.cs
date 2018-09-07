@@ -1,9 +1,9 @@
 ﻿using Octokit;
+using RhetosCLI.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.IO.Compression;
 using System.IO;
+using System.Linq;
 
 namespace RhetosCLI.Commands
 {
@@ -20,7 +20,7 @@ namespace RhetosCLI.Commands
             {
                 result.Add(string.Format("Version: {0}, Published at: {1}", release.TagName, release.PublishedAt.ToString()));
             }
-            result.ForEach(Helpers.WriteLine);
+            result.ForEach(MiscHelpers.WriteLine);
         }
 
         public static string DownloadRhetosRelease(string version)
@@ -31,15 +31,15 @@ namespace RhetosCLI.Commands
 
             if (release != null)
             {
-                var archivePath = Helpers.DownloadRelease(release.Assets.First().BrowserDownloadUrl);
+                var archivePath = MiscHelpers.DownloadRelease(release.Assets.First().BrowserDownloadUrl);
                 extractedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Path.GetFileNameWithoutExtension(archivePath));
-                Helpers.WriteLine("Extracting {0} to {1}", archivePath, extractedPath);
-                Helpers.UnzipFile(archivePath, extractedPath);
-                Helpers.WriteLine("Extraction done", ConsoleColor.Green);
+                MiscHelpers.WriteLine("Extracting {0} to {1}", archivePath, extractedPath);
+                MiscHelpers.UnzipFile(archivePath, extractedPath);
+                MiscHelpers.WriteLine("Extraction done", ConsoleColor.Green);
             }
             else
             {
-                Helpers.WriteLine("ERROR! Can't find version {0}", version, ConsoleColor.Red);
+                MiscHelpers.WriteLine("ERROR! Can't find version {0}", version, ConsoleColor.Red);
             }
             return extractedPath;
         }

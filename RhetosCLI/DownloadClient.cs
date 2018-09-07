@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RhetosCLI.Helpers;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace RhetosCLI
         public string DownloadFile()
         {
             var uri = new Uri(Url);
-            var destination = string.Format("{0}\\{1}", Helpers.GetCachePath(), uri.Segments.Last());
+            var destination = string.Format("{0}\\{1}", MiscHelpers.GetCachePath(), uri.Segments.Last());
             //TODO: Check for if file exists....and skip download
             var fileInfo = new FileInfo(destination);
             if (!fileInfo.Exists)
@@ -33,7 +34,7 @@ namespace RhetosCLI
                     var syncObject = new Object();
                     lock (syncObject)
                     {
-                        Helpers.WriteLine("Downloading file {0} {1}%", Url, 0);
+                        MiscHelpers.WriteLine("Downloading file {0} {1}%", Url, 0);
                         wc.DownloadFileAsync(uri, destination, syncObject);
                         //Wait for download to complete (or fail)...
                         Monitor.Wait(syncObject);
@@ -42,7 +43,7 @@ namespace RhetosCLI
             }
             else
             {
-                Helpers.WriteLine("File exists download skipped...",ConsoleColor.Yellow);
+                MiscHelpers.WriteLine("File exists download skipped...", ConsoleColor.Yellow);
             }
             return destination;
         }
@@ -54,12 +55,12 @@ namespace RhetosCLI
                 if (e.Error == null)
                 {
                     ProgressDone = true;
-                    Helpers.WriteLine("Download completed", ConsoleColor.Green);
+                    MiscHelpers.WriteLine("Download completed", ConsoleColor.Green);
                 }
                 else
                 {
-                    Helpers.WriteLine("There was error downloading file", ConsoleColor.Red);
-                    Helpers.WriteLine("Exception details: {1}", ConsoleColor.Red, Url, e.Error.ToString());
+                    MiscHelpers.WriteLine("There was error downloading file", ConsoleColor.Red);
+                    MiscHelpers.WriteLine("Exception details: {1}", ConsoleColor.Red, Url, e.Error.ToString());
                 }
                 //releases blocked thread
                 Monitor.Pulse(e.UserState);
@@ -73,7 +74,7 @@ namespace RhetosCLI
                 if (!ProgressDone)
                 {
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    Helpers.WriteLine("Downloading file {0} {1}/{2}MB {3}%", Url, args.BytesReceived / 1024, args.TotalBytesToReceive / 1024, args.ProgressPercentage);
+                    MiscHelpers.WriteLine("Downloading file {0} {1}/{2}MB {3}%", Url, args.BytesReceived / 1024, args.TotalBytesToReceive / 1024, args.ProgressPercentage);
                 }
             }
         }

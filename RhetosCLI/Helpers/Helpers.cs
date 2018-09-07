@@ -1,14 +1,11 @@
-﻿using Microsoft.Web.Administration;
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 
-namespace RhetosCLI
+namespace RhetosCLI.Helpers
 {
-    internal static class Helpers
+    public static class MiscHelpers
     {
-  
         public static string DownloadRelease(string url)
         {
             //Download relase save to disk and return filename
@@ -48,7 +45,5 @@ namespace RhetosCLI
             }
             ZipFile.ExtractToDirectory(source, destination);
         }
-
-       
     }
 }
