@@ -33,13 +33,13 @@ namespace RhetosCLI.Commands
             {
                 var archivePath = MiscHelpers.DownloadRelease(release.Assets.First().BrowserDownloadUrl);
                 extractedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Path.GetFileNameWithoutExtension(archivePath));
-                MiscHelpers.WriteLine("Extracting {0} to {1}", archivePath, extractedPath);
+                Logging.LogInfo("Extracting {0} to {1}", archivePath, extractedPath);
                 MiscHelpers.UnzipFile(archivePath, extractedPath);
-                MiscHelpers.WriteLine("Extraction done", ConsoleColor.Green);
+                Logging.LogInfo("Extraction done");
             }
             else
             {
-                MiscHelpers.WriteLine("ERROR! Can't find version {0}", version, ConsoleColor.Red);
+                throw new ArgumentException(string.Format("Can't find version {0}", version));
             }
             return extractedPath;
         }

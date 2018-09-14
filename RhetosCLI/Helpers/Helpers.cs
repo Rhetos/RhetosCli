@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Reflection;
 
 namespace RhetosCLI.Helpers
 {
@@ -24,12 +26,18 @@ namespace RhetosCLI.Helpers
 
         public static void WriteLine(string message, params object[] args)
         {
-            Console.WriteLine(message, args);
+            if (Environment.UserInteractive)
+            {
+                Console.WriteLine(message, args);
+            }
         }
 
         public static void WriteLine(string message)
         {
-            Console.WriteLine(message);
+            if (Environment.UserInteractive && Debugger.IsAttached)
+            {
+                Console.WriteLine(message);
+            }
         }
 
         public static string GetCachePath()
@@ -44,6 +52,41 @@ namespace RhetosCLI.Helpers
                 Directory.Delete(destination, true);
             }
             ZipFile.ExtractToDirectory(source, destination);
+        }
+
+        public static void SetParams(object target,CliCommand command)
+        {
+            var props = target.GetType().GetProperties();
+            foreach (var prop in props)
+            {
+                var propName= prop.Name.ToUpper();
+                var propInfo = target.GetType().GetProperty(propName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public);
+                var paramValue = command.Parameters.ContainsKey(propName) ? command.Parameters[propName] : null;
+                propInfo.SetValue(target,Convert.ChangeType(paramValue, propInfo.PropertyType),  null);
+            }
+        }
+
+        public static bool StartExternalExe(string target)
+        {
+
+            Logging.LogInfo("Staring external exe {0}", target);
+            Logging.LogInfo("--------External exe output START-----");
+            Process pProcess = new Process();
+            pProcess.StartInfo.FileName = target;
+            pProcess.StartInfo.Arguments = "/NoPause";
+            pProcess.StartInfo.UseShellExecute = false;
+            pProcess.StartInfo.RedirectStandardOutput = true;
+            pProcess.StartInfo.RedirectStandardError= true;
+            pProcess.Start();
+            pProcess.WaitForExit();
+            string output = pProcess.StandardOutput.ReadToEnd();
+            Logging.LogInfo(output);
+            string err = pProcess.StandardError.ReadToEnd();
+            Logging.LogError(err);
+            Logging.LogInfo("--------External exe output END-----");
+            Logging.LogInfo("External exe end {0}", target);
+            return pProcess.ExitCode == 0;
+
         }
     }
 }

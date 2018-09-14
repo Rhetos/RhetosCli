@@ -2,8 +2,7 @@
 {
     public interface ICliCommand
     {
-        bool Execute(CliCommandParams parameters);
-
-        void ShowHelp();
+        void Execute(CliCommand command);
+        void ShowHelp(CliCommand command);
     }
 }

@@ -1,6 +1,9 @@
+using NLog;
 using RhetosCLI.Attributes;
+using RhetosCLI.Commands;
 using RhetosCLI.Helpers;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,17 +16,30 @@ namespace RhetosCLI
         {
             try
             {
-                //TODO implement help and command discovery
-                MiscHelpers.WriteLine("Rhetos CLI version {0}", Assembly.GetExecutingAssembly().GetName().Version);
+                Logging.Logger = LogManager.GetCurrentClassLogger();
+                Logging.LogInfo("Rhetos CLI version {0}", Assembly.GetExecutingAssembly().GetName().Version);
                 CreateCacheFolder();
-                LoadAllCommands();
-                var cmdParams = ParseCommandLine(args);
+                //TODO implement help and command discovery
+                //var allCommands = LoadAllCommands();
+                var command = ParseCommandLine(args);
 
-                //CreateApp.Create("v2.7.0", "vlado_Test", "Vlado_test", @"<Your username>", "<Your password>", false);
+                if (string.IsNullOrEmpty(command.Command))
+                {
+                    //ShowHelp
+                    //Generate help from all commands
+                    Console.WriteLine ("Showing Help");
+                }
+                else
+                {
+                    //Executecommand
+                    var cmd = new Rhetos();
+                    MiscHelpers.SetParams(cmd, command);
+                    cmd.Execute(command);
+                }
             }
             catch (Exception ex)
             {
-                MiscHelpers.WriteLine("ERROR: {0}", ConsoleColor.Red, ex.ToString());
+                Logging.LogFatal(ex, "" );
             }
             finally
             {
@@ -35,35 +51,29 @@ namespace RhetosCLI
         private static void CreateCacheFolder()
         {
             var cacheDir = MiscHelpers.GetCachePath();
-            MiscHelpers.WriteLine("Checking for cache dir at {0}", cacheDir);
+            Logging.LogInfo("Checking for cache dir at {0}", cacheDir);
             Directory.CreateDirectory(cacheDir);
         }
 
-        private static CliCommandParams ParseCommandLine(string[] args)
+        private static CliCommand ParseCommandLine(string[] args)
         {
-            var cmdParams = new CliCommandParams
+            var cmdParams = new CliCommand();
+
+            if (args.Length>0)
             {
-                // first param is command  and value for it is empty
-                Command = args[0]
-            };
-            foreach (var arg in args.ToList().Skip(1))
-            {
-                var value = arg.Split('=');
-                cmdParams.Parameters.Add(value[0], value[1]);
+                cmdParams.Command = args[0];
+                foreach (var arg in args.Skip(1))
+                {
+                    var value = arg.Split('=');
+                    cmdParams.Parameters.Add(value[0].ToUpper(), value[1]);
+                }
             }
             return cmdParams;
         }
 
-        private static void LoadAllCommands()
+        private static List<Type> LoadAllCommands()
         {
-
-            var types = Assembly.GetExecutingAssembly().GetExportedTypes();
-
-            foreach (var type in types)
-            {
-                var isCommand = type.GetMethods().Where(m => m.GetCustomAttribute<CliCommandAttribute>() != null);
-            }
-         
+            return  Assembly.GetExecutingAssembly().GetExportedTypes().Where(t=>t.GetCustomAttribute<CliCommandAttribute>() != null).ToList();
         }
     }
 }

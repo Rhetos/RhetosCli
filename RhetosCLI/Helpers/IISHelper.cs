@@ -1,6 +1,7 @@
 ﻿using Microsoft.Web.Administration;
 using System;
 using System.Linq;
+using System.Security.Principal;
 
 namespace RhetosCLI.Helpers
 {
@@ -22,8 +23,23 @@ namespace RhetosCLI.Helpers
             return "/" + appName;
         }
 
+        private static bool IsUserAdmin()
+        {
+            
+                WindowsIdentity identity = WindowsIdentity.GetCurrent();
+                WindowsPrincipal principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            
+        }
+        
+
         public static void CreateWebSite(string appName, string appPoolName, string userName, string password, string path, bool enable32bit, bool enableWindowsAuth)
         {
+            if (!IsUserAdmin())
+            {
+                throw new InvalidOperationException("This command needs elevated status to access IIS configuration data. You need to run it as admin!");
+            }
+
             if (string.IsNullOrEmpty(appName)) throw new ArgumentException("App name can't be empty");
             if (string.IsNullOrEmpty(appPoolName)) throw new ArgumentException("App pool name can't be empty");
             if (string.IsNullOrEmpty(path)) throw new ArgumentException("Path can't be empty");
@@ -58,11 +74,11 @@ namespace RhetosCLI.Helpers
                 //must commit before changing security mode
                 serverManager.CommitChanges();
                 SetAuthMode(enableWindowsAuth, serverManager, iisAppName, app);
-                MiscHelpers.WriteLine("App {0} created, it is using {1} app pool.", ConsoleColor.Green, appName, appPoolName);
+                Logging.LogInfo("App {0} created, it is using {1} app pool.",appName, appPoolName);
             }
             else
             {
-                throw new InvalidOperationException(string.Format("Application {0} already exists, aborting.", appName));
+                //throw new InvalidOperationException(string.Format("Application {0} already exists, aborting.", appName));
             }
         }
 
@@ -84,7 +100,7 @@ namespace RhetosCLI.Helpers
             }
             else
             {
-                MiscHelpers.WriteLine("App pool {0} exists, it wil be reused.", ConsoleColor.Yellow, appPoolName);
+                Logging.LogWarn("App pool {0} exists, it wil be reused.", appPoolName);
             }
         }
 

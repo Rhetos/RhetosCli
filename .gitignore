@@ -7,3 +7,4 @@
 /RhetosCLI/obj/Debug
 *.suo
 /packages
+/RhetosCLI/*.user

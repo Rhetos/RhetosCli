@@ -34,7 +34,7 @@ namespace RhetosCLI
                     var syncObject = new Object();
                     lock (syncObject)
                     {
-                        MiscHelpers.WriteLine("Downloading file {0} {1}%", Url, 0);
+                        Logging.LogInfo("Downloading file {0} {1}%", Url, 0);
                         wc.DownloadFileAsync(uri, destination, syncObject);
                         //Wait for download to complete (or fail)...
                         Monitor.Wait(syncObject);
@@ -43,7 +43,7 @@ namespace RhetosCLI
             }
             else
             {
-                MiscHelpers.WriteLine("File exists download skipped...", ConsoleColor.Yellow);
+                Logging.LogWarn("File exists download skipped...");
             }
             return destination;
         }
@@ -55,12 +55,11 @@ namespace RhetosCLI
                 if (e.Error == null)
                 {
                     ProgressDone = true;
-                    MiscHelpers.WriteLine("Download completed", ConsoleColor.Green);
+                    Logging.LogInfo("Download completed");
                 }
                 else
                 {
-                    MiscHelpers.WriteLine("There was error downloading file", ConsoleColor.Red);
-                    MiscHelpers.WriteLine("Exception details: {1}", ConsoleColor.Red, Url, e.Error.ToString());
+                    Logging.LogError(e.Error, "There was error downloading file {0}", Url);
                 }
                 //releases blocked thread
                 Monitor.Pulse(e.UserState);
@@ -73,8 +72,8 @@ namespace RhetosCLI
             {
                 if (!ProgressDone)
                 {
-                    Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    MiscHelpers.WriteLine("Downloading file {0} {1}/{2}MB {3}%", Url, args.BytesReceived / 1024, args.TotalBytesToReceive / 1024, args.ProgressPercentage);
+                    //Console.SetCursorPosition(0, Console.CursorTop - 1);
+                    //MiscHelpers.WriteLine("Downloading file {0} {1}/{2}MB {3}%", Url, args.BytesReceived / 1024, args.TotalBytesToReceive / 1024, args.ProgressPercentage);
                 }
             }
         }
