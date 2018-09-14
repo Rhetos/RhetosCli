@@ -17,8 +17,8 @@ namespace RhetosCLI.Commands
         public const string DEPLOY_PACKAGES = @"bin\DeployPackages.exe";
         public const string RHETOS_PACKAGES_TEMPLATE_CONFIG = @"Template.RhetosPackages.config";
         public const string RHETOS_PACKAGES_CONFIG = @"RhetosPackages.config";
-        public const string RHETOS_PACKAGES__SOURCE_TEMPLATE_CONFIG = @"Template.RhetosPackageSources.config";
-        public const string RHETOS_PACKAGES__SORCE_CONFIG = @"RhetosPackageSources";
+        public const string RHETOS_PACKAGES_SOURCE_TEMPLATE_CONFIG = @"Template.RhetosPackageSources.config";
+        public const string RHETOS_PACKAGES_SOURCE_CONFIG = @"RhetosPackageSources.config";
         public const string CONN_STRING_NAME = @"ServerConnectionString";
 
         public string RhetosVersion { get; set; }
@@ -28,16 +28,14 @@ namespace RhetosCLI.Commands
         public string Password { get; set; }
         public string DBServer { get; set; }
         public string DataBaseName { get; set; }
-        public string DBUserName{ get; set; }
-        public string DBPassword{ get; set; }
+        public string DBUserName { get; set; }
+        public string DBPassword { get; set; }
         public bool UseWindowsAuth { get; set; }
-
 
         private string RhetosPath { get; set; }
 
         public Rhetos()
         {
-
         }
 
         [CliCommand("Create", "Creates new rhetos app instance,setups database and starts web service")]
@@ -47,6 +45,7 @@ namespace RhetosCLI.Commands
             var enable32Bit = string.Compare(RhetosVersion, "v1.1") != 1;
             RhetosPath = Releases.DownloadRhetosRelease(RhetosVersion);
             IIS.CreateWebSite(SiteName, AppPoolName, UserName, Password, RhetosPath, enable32Bit, UseWindowsAuth);
+            CheckForRhetosConfiguration();
             SetDatabase();
             CheckDbPermissions();
             Deploy();
@@ -61,6 +60,7 @@ namespace RhetosCLI.Commands
             //AddAdmin
             //
         }
+
         [CliCommand("DeployPackages", "Run deploy packages")]
         public void Deploy()
         {
@@ -68,11 +68,34 @@ namespace RhetosCLI.Commands
             MiscHelpers.StartExternalExe(deployPackagesPath);
         }
 
+        private void CheckForRhetosConfiguration()
+        {
+            var packagesConfigPath = Path.Combine(RhetosPath, RHETOS_PACKAGES_CONFIG);
+            if (!File.Exists(packagesConfigPath))
+            {
+                var templatePath = Path.Combine(RhetosPath, RHETOS_PACKAGES_TEMPLATE_CONFIG);
+                CreateFromTemplate(packagesConfigPath, templatePath);
+            }
+
+            var dbConfigPath = Path.Combine(RhetosPath, CONN_STRINGS_CONFIG);
+            if (!File.Exists(dbConfigPath))
+            {
+                var templatePath = Path.Combine(RhetosPath, CONN_STRINGS_TEMPLATE_CONFIG);
+                CreateFromTemplate(dbConfigPath, templatePath);
+            }
+
+            var packageSourcesConfig = Path.Combine(RhetosPath, RHETOS_PACKAGES_SOURCE_CONFIG);
+            if (!File.Exists(packageSourcesConfig))
+            {
+                var templatePath = Path.Combine(RhetosPath, RHETOS_PACKAGES_SOURCE_TEMPLATE_CONFIG);
+                CreateFromTemplate(packageSourcesConfig, templatePath);
+            }
+        }
+
         [CliCommand("CheckDbPermissions", "Checks if user has needed DB permissions")]
         public void CheckDbPermissions()
         {
-            var d = 0;
-            d = d + 1;
+           //TODO
         }
 
         [CliCommand("SetDatabase", "Updates database data in ConnectionStrings.config")]
@@ -80,31 +103,23 @@ namespace RhetosCLI.Commands
         {
             if (string.IsNullOrEmpty(DBServer)) throw new ArgumentException("DB server must be specified");
             if (string.IsNullOrEmpty(DataBaseName)) throw new ArgumentException("DataBase must be specified");
-            
+
             if (!UseWindowsAuth && string.IsNullOrEmpty(DBUserName)) throw new ArgumentException("If not using windows auth Username and password must be specified");
             if (!UseWindowsAuth && string.IsNullOrEmpty(DBPassword)) throw new ArgumentException("If not using windows auth Username and password must be specified");
             if (string.IsNullOrEmpty(Password) && !string.IsNullOrEmpty(UserName)) throw new ArgumentException("If Use sspi is false, DBUserName and DBPassword are requred.");
 
             var connString = DataBase.GetConnectionString(DBServer, DataBaseName, UserName, Password, UseWindowsAuth);
-            var config = GetConfiguration(CONN_STRINGS_CONFIG, CONN_STRINGS_TEMPLATE_CONFIG);
-            config.ConnectionStrings.ConnectionStrings[CONN_STRING_NAME].ConnectionString=connString;
+            var config = GetDBConfiguration(CONN_STRINGS_CONFIG);
+            config.ConnectionStrings.ConnectionStrings[CONN_STRING_NAME].ConnectionString = connString;
             config.Save();
         }
 
-        private Configuration GetConfiguration(string config, string template)
+        private Configuration GetDBConfiguration(string config)
         {
-            var configPath = Path.Combine(RhetosPath, config);
-            if (!File.Exists(configPath))
-            {
-                Logging.LogWarn("Config file {0} not found. Creating new from template {1}", config, template);
-                var templatePath = Path.Combine(RhetosPath, template);
-                CreateFromTemplate(configPath, templatePath);
-            }
-
             VirtualDirectoryMapping vdm = new VirtualDirectoryMapping(RhetosPath, true);
             WebConfigurationFileMap wcfm = new WebConfigurationFileMap();
             wcfm.VirtualDirectories.Add("/", vdm);
-            return  WebConfigurationManager.OpenMappedWebConfiguration(wcfm, "/");
+            return WebConfigurationManager.OpenMappedWebConfiguration(wcfm, "/");
         }
 
         private static void CreateFromTemplate(string target, string template)
@@ -112,7 +127,7 @@ namespace RhetosCLI.Commands
             if (!(File.Exists(target)))
             {
                 File.Copy(template, target);
-                Logging.LogWarn("Config file {0} created", target);
+                Logging.LogWarn("Config file {0} created from template {1}", target,template);
             }
         }
 
@@ -122,7 +137,8 @@ namespace RhetosCLI.Commands
             {
                 case "Create":
                     Create();
-                        break;
+                    break;
+
                 default:
                     break;
             }
@@ -132,11 +148,5 @@ namespace RhetosCLI.Commands
         {
             throw new System.NotImplementedException();
         }
-
-        private void SetConnectionString()
-        {
-            var connString = DataBase.GetConnectionString(DBServer, DataBaseName, UserName, Password, UseWindowsAuth);
-        }
-        
     }
 }

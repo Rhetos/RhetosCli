@@ -68,25 +68,29 @@ namespace RhetosCLI.Helpers
 
         public static bool StartExternalExe(string target)
         {
-
-            Logging.LogInfo("Staring external exe {0}", target);
-            Logging.LogInfo("--------External exe output START-----");
+            Logging.LogWarn("Staring external exe {0}", target);
+            Logging.LogWarn("--------External exe output START-----");
             Process pProcess = new Process();
             pProcess.StartInfo.FileName = target;
             pProcess.StartInfo.Arguments = "/NoPause";
             pProcess.StartInfo.UseShellExecute = false;
             pProcess.StartInfo.RedirectStandardOutput = true;
-            pProcess.StartInfo.RedirectStandardError= true;
+            pProcess.StartInfo.RedirectStandardError = true;
             pProcess.Start();
             pProcess.WaitForExit();
             string output = pProcess.StandardOutput.ReadToEnd();
-            Logging.LogInfo(output);
+            if (!String.IsNullOrEmpty(output))
+            {
+                Logging.LogInfo(output);
+            }
             string err = pProcess.StandardError.ReadToEnd();
-            Logging.LogError(err);
-            Logging.LogInfo("--------External exe output END-----");
-            Logging.LogInfo("External exe end {0}", target);
+            if (!String.IsNullOrEmpty(err))
+            {
+                Logging.LogError(err);
+            }
+            Logging.LogWarn("--------External exe output END-----");
+            Logging.LogWarn("External exe {0} finished", target);
             return pProcess.ExitCode == 0;
-
         }
     }
 }

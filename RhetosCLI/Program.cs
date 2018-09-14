@@ -19,8 +19,8 @@ namespace RhetosCLI
                 Logging.Logger = LogManager.GetCurrentClassLogger();
                 Logging.LogInfo("Rhetos CLI version {0}", Assembly.GetExecutingAssembly().GetName().Version);
                 CreateCacheFolder();
-                //TODO implement help and command discovery
-                //var allCommands = LoadAllCommands();
+                //TODO implement help and command discovery //var allCommands = LoadAllCommands();
+
                 var command = ParseCommandLine(args);
 
                 if (string.IsNullOrEmpty(command.Command))

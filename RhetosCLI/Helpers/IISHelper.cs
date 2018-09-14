@@ -78,7 +78,7 @@ namespace RhetosCLI.Helpers
             }
             else
             {
-                //throw new InvalidOperationException(string.Format("Application {0} already exists, aborting.", appName));
+                throw new InvalidOperationException(string.Format("Application {0} already exists, aborting.", appName));
             }
         }
 
