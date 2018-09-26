@@ -1,11 +1,10 @@
-﻿using System;
-using NLog;
+﻿using NLog;
+using System;
 
 namespace RhetosCLI.Helpers
 {
     public static class Logging
     {
-
         public static ILogger Logger { get; set; }
 
         public static void LogFatal(Exception ex, string message)
@@ -13,12 +12,17 @@ namespace RhetosCLI.Helpers
             Logger.Log(LogLevel.Fatal, ex, message);
         }
 
+        public static void LogFatal(string message, params object[] args)
+        {
+            Logger.Log(LogLevel.Fatal, string.Format(message, args));
+        }
+
         public static void LogError(string message, params object[] args)
         {
             Logger.Log(LogLevel.Error, string.Format(message, args));
         }
 
-        public static void LogError(Exception ex,string message, params object[] args)
+        public static void LogError(Exception ex, string message, params object[] args)
         {
             Logger.Log(LogLevel.Error, ex, string.Format(message, args));
         }
@@ -27,18 +31,20 @@ namespace RhetosCLI.Helpers
         {
             Logger.Log(LogLevel.Warn, string.Format(message, args));
         }
+
         public static void LogInfo(string message, params object[] args)
         {
             Logger.Log(LogLevel.Info, string.Format(message, args));
         }
+
         public static void LogDebug(Exception ex, string message)
         {
             Logger.Log(LogLevel.Debug, message);
         }
-        public static void LogTrace(Exception ex, string message)
+
+        public static void LogTrace(string message, params object[] args)
         {
-            Logger.Log(LogLevel.Trace, message);
+            Logger.Log(LogLevel.Trace, string.Format(message, args));
         }
     }
-    
 }

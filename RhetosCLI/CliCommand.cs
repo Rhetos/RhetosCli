@@ -5,7 +5,11 @@ namespace RhetosCLI
 {
     public class CliCommand
     {
-        public String Command { get; set; }
+        public Type Type { get; set; }
+        public string Module { get; set; }
+        public string Command { get; set; }
+        public string Method { get; set; }
+
         public Dictionary<string, string> Parameters { get; set; }
 
         public CliCommand()

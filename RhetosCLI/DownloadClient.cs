@@ -22,14 +22,12 @@ namespace RhetosCLI
         {
             var uri = new Uri(Url);
             var destination = string.Format("{0}\\{1}", MiscHelpers.GetCachePath(), uri.Segments.Last());
-            //TODO: Check for if file exists....and skip download
             var fileInfo = new FileInfo(destination);
             if (!fileInfo.Exists)
             {
                 using (var wc = new WebClient())
                 {
                     wc.Headers.Add("User-Agent", "Rhetos CLI");
-                    wc.DownloadProgressChanged += HandleDownloadProgress;
                     wc.DownloadFileCompleted += HandleDownloadComplete;
                     var syncObject = new Object();
                     lock (syncObject)
@@ -63,18 +61,6 @@ namespace RhetosCLI
                 }
                 //releases blocked thread
                 Monitor.Pulse(e.UserState);
-            }
-        }
-
-        public void HandleDownloadProgress(object sender, DownloadProgressChangedEventArgs args)
-        {
-            lock (args.UserState)
-            {
-                if (!ProgressDone)
-                {
-                    //Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    //MiscHelpers.WriteLine("Downloading file {0} {1}/{2}MB {3}%", Url, args.BytesReceived / 1024, args.TotalBytesToReceive / 1024, args.ProgressPercentage);
-                }
             }
         }
     }

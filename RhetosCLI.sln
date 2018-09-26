@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27703.2018
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RhetosCLI", "RhetosCLI\RhetosCLI.csproj", "{6D987215-2D91-40A1-951E-3E25C51D7141}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RhetosCLITests", "RhetosCLITests\RhetosCLITests.csproj", "{645A9E36-42A3-468C-BA61-69F6A249692E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{6D987215-2D91-40A1-951E-3E25C51D7141}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D987215-2D91-40A1-951E-3E25C51D7141}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D987215-2D91-40A1-951E-3E25C51D7141}.Release|Any CPU.Build.0 = Release|Any CPU
+		{645A9E36-42A3-468C-BA61-69F6A249692E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{645A9E36-42A3-468C-BA61-69F6A249692E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{645A9E36-42A3-468C-BA61-69F6A249692E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{645A9E36-42A3-468C-BA61-69F6A249692E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -8,3 +8,6 @@
 *.suo
 /packages
 /RhetosCLI/*.user
+/RhetosCLITests/bin/Debug
+/RhetosCLITests/obj/Debug
+/.vs

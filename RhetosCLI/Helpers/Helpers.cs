@@ -1,7 +1,10 @@
-﻿using System;
+﻿using RhetosCLI.Attributes;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Reflection;
 
 namespace RhetosCLI.Helpers
@@ -26,7 +29,7 @@ namespace RhetosCLI.Helpers
 
         public static void WriteLine(string message, params object[] args)
         {
-            if (Environment.UserInteractive)
+            if (IsInteractive())
             {
                 Console.WriteLine(message, args);
             }
@@ -34,7 +37,7 @@ namespace RhetosCLI.Helpers
 
         public static void WriteLine(string message)
         {
-            if (Environment.UserInteractive && Debugger.IsAttached)
+            if (IsInteractive())
             {
                 Console.WriteLine(message);
             }
@@ -54,16 +57,80 @@ namespace RhetosCLI.Helpers
             ZipFile.ExtractToDirectory(source, destination);
         }
 
-        public static void SetParams(object target,CliCommand command)
+        public static void SetParams(object target, CliCommand command)
         {
             var props = target.GetType().GetProperties();
             foreach (var prop in props)
             {
-                var propName= prop.Name.ToUpper();
+                var propName = prop.Name.ToLower();
                 var propInfo = target.GetType().GetProperty(propName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public);
-                var paramValue = command.Parameters.ContainsKey(propName) ? command.Parameters[propName] : null;
-                propInfo.SetValue(target,Convert.ChangeType(paramValue, propInfo.PropertyType),  null);
+                var paramValue = command.Parameters.ContainsKey(propName) ? command.Parameters[propName] : GetDefault(propInfo.PropertyType);
+                propInfo.SetValue(target, Convert.ChangeType(paramValue, propInfo.PropertyType), null);
             }
+        }
+
+        public static bool ResolveCommand(List<CliCommand> commands, CliCommand command)
+        {
+            var retValue = true;
+
+            if (!commands.Any(c => c.Module == command.Module))
+            {
+                Logging.LogFatal("Module {0} doesn't exist", command.Module);
+                retValue = false;
+            }
+            else
+            {
+                if (!commands.Any(c => c.Module == command.Module && c.Command == command.Command))
+                {
+                    Logging.LogFatal("Module {0} has no command {1}", command.Module, command.Command);
+                    retValue = false;
+                }
+            }
+            if (retValue)
+            {
+                var resolvedCommand = commands.Single(c => c.Module == command.Module && c.Command == command.Command);
+                command.Type = resolvedCommand.Type;
+                command.Method = resolvedCommand.Method;
+            }
+            return retValue;
+        }
+
+        public static List<CliCommand> LoadAllCommands()
+        {
+            Logging.LogTrace("Loading commands");
+            var types = Assembly.GetExecutingAssembly().GetExportedTypes().Where(t => t.GetCustomAttribute<ClicommandModuleAttribute>() != null).ToList();
+            var cliCommands = new List<CliCommand>();
+            foreach (var type in types)
+            {
+                var methods = type.GetMethods().Where(m => m.GetCustomAttribute<CliCommandAttribute>() != null).ToList();
+                foreach (var method in methods)
+                {
+                    var cmd = new CliCommand
+                    {
+                        Type = type,
+                        Module = type.GetCustomAttribute<ClicommandModuleAttribute>().ModuleName.ToLower(),
+                        Command = method.GetCustomAttribute<CliCommandAttribute>().CommandName.ToLower(),
+                        Method = method.Name
+                    };
+                    cliCommands.Add(cmd);
+                }
+            }
+            Logging.LogTrace("{0} commands loaded in {1} module(s)", cliCommands.Count, cliCommands.Select(c => c.Module).Distinct().Count());
+            return cliCommands;
+        }
+
+        private static object GetDefault(Type type)
+        {
+            if (type.IsValueType)
+            {
+                return Activator.CreateInstance(type);
+            }
+            return null;
+        }
+
+        public static bool IsInteractive()
+        {
+            return Environment.UserInteractive;
         }
 
         public static bool StartExternalExe(string target)
@@ -91,6 +158,23 @@ namespace RhetosCLI.Helpers
             Logging.LogWarn("--------External exe output END-----");
             Logging.LogWarn("External exe {0} finished", target);
             return pProcess.ExitCode == 0;
+        }
+
+        public static CliCommand ParseCommandLine(string[] args)
+        {
+            var cmdParams = new CliCommand();
+
+            if (args.Length > 0)
+            {
+                cmdParams.Module = args[0].ToLower();
+                cmdParams.Command = args[1].ToLower();
+                foreach (var arg in args.Skip(2))
+                {
+                    var value = arg.Split('=');
+                    cmdParams.Parameters.Add(value[0].ToLower().Trim(), value[1].Trim());
+                }
+            }
+            return cmdParams;
         }
     }
 }

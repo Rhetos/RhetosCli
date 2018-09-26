@@ -76,7 +76,6 @@
     <Compile Include="Helpers\Helpers.cs" />
     <Compile Include="Helpers\IISHelper.cs" />
     <Compile Include="Helpers\Logging.cs" />
-    <Compile Include="Interfaces\ICliCommand.cs" />
     <Compile Include="RhetosGitGubCllient.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

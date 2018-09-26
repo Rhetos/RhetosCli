@@ -1,6 +1,5 @@
 ﻿using RhetosCLI.Attributes;
 using RhetosCLI.Helpers;
-using RhetosCLI.Interfaces;
 using System;
 using System.Configuration;
 using System.IO;
@@ -9,7 +8,7 @@ using System.Web.Configuration;
 namespace RhetosCLI.Commands
 {
     [ClicommandModuleAttribute("Rhetos", "General rhetos functions")]
-    public class Rhetos : ICliCommand
+    public class Rhetos
     {
         public const string CONN_STRINGS_TEMPLATE_CONFIG = @"bin\Template.ConnectionStrings.config";
         public const string CONN_STRINGS_CONFIG = @"bin\ConnectionStrings.config";
@@ -36,34 +35,31 @@ namespace RhetosCLI.Commands
 
         public Rhetos()
         {
+            //TODO implement detection of rhetos and setting path variable.
         }
 
         [CliCommand("Create", "Creates new rhetos app instance,setups database and starts web service")]
         public void Create()
         {
+            ValidateSetDatabaseParams();
+
             Logging.LogInfo("Creating app {0} with rhetos {1}", AppPoolName, RhetosVersion);
             var enable32Bit = string.Compare(RhetosVersion, "v1.1") != 1;
-            RhetosPath = Releases.DownloadRhetosRelease(RhetosVersion);
+            var releases = new Releases();
+
+            RhetosPath = releases.DownloadRhetosRelease(RhetosVersion);
             IIS.CreateWebSite(SiteName, AppPoolName, UserName, Password, RhetosPath, enable32Bit, UseWindowsAuth);
             CheckForRhetosConfiguration();
             SetDatabase();
             CheckDbPermissions();
             Deploy();
-            /*
-            In the RhetosServer folder:
-            Copy "Template.RhetosPackages.config" file to "RhetosPackages.config", if the target file does not already exist.
-            Copy "Template.RhetosPackageSources.config" file to "RhetosPackageSources.config", if the target does not already exist.
-            Verify that the RhetosServer is configured correctly by opening command prompt at RhetosServer\bin folder and running DeployPackages.exe.
-            The last printed line should be "[Trace] DeployPackages: Done.".
-            The output may include "[Error] DeploymentConfiguration: No packages" and "[Error] DeployPackages: WARNING: Empty assembly...", because no packages are provided in the "RhetosPackages.config".This is ok for now.
-             */
-            //AddAdmin
-            //
+            //TODO AddAdmin command
         }
 
-        [CliCommand("DeployPackages", "Run deploy packages")]
+        [CliCommand("Deploy", "Run deploy packages")]
         public void Deploy()
         {
+            //TODO how to get rhetospath
             var deployPackagesPath = Path.Combine(RhetosPath, DEPLOY_PACKAGES);
             MiscHelpers.StartExternalExe(deployPackagesPath);
         }
@@ -95,11 +91,22 @@ namespace RhetosCLI.Commands
         [CliCommand("CheckDbPermissions", "Checks if user has needed DB permissions")]
         public void CheckDbPermissions()
         {
-           //TODO
+            //TODO
         }
 
         [CliCommand("SetDatabase", "Updates database data in ConnectionStrings.config")]
         public void SetDatabase()
+        {
+            ValidateSetDatabaseParams();
+
+            var db = new DataBase(DBServer, DataBaseName, UserName, Password, UseWindowsAuth);
+            var connString = db.GetConnectionString();
+            var config = GetDBConfiguration();
+            config.ConnectionStrings.ConnectionStrings[CONN_STRING_NAME].ConnectionString = connString;
+            config.Save();
+        }
+
+        private void ValidateSetDatabaseParams()
         {
             if (string.IsNullOrEmpty(DBServer)) throw new ArgumentException("DB server must be specified");
             if (string.IsNullOrEmpty(DataBaseName)) throw new ArgumentException("DataBase must be specified");
@@ -107,14 +114,9 @@ namespace RhetosCLI.Commands
             if (!UseWindowsAuth && string.IsNullOrEmpty(DBUserName)) throw new ArgumentException("If not using windows auth Username and password must be specified");
             if (!UseWindowsAuth && string.IsNullOrEmpty(DBPassword)) throw new ArgumentException("If not using windows auth Username and password must be specified");
             if (string.IsNullOrEmpty(Password) && !string.IsNullOrEmpty(UserName)) throw new ArgumentException("If Use sspi is false, DBUserName and DBPassword are requred.");
-
-            var connString = DataBase.GetConnectionString(DBServer, DataBaseName, UserName, Password, UseWindowsAuth);
-            var config = GetDBConfiguration(CONN_STRINGS_CONFIG);
-            config.ConnectionStrings.ConnectionStrings[CONN_STRING_NAME].ConnectionString = connString;
-            config.Save();
         }
 
-        private Configuration GetDBConfiguration(string config)
+        private Configuration GetDBConfiguration()
         {
             VirtualDirectoryMapping vdm = new VirtualDirectoryMapping(RhetosPath, true);
             WebConfigurationFileMap wcfm = new WebConfigurationFileMap();
@@ -127,24 +129,12 @@ namespace RhetosCLI.Commands
             if (!(File.Exists(target)))
             {
                 File.Copy(template, target);
-                Logging.LogWarn("Config file {0} created from template {1}", target,template);
+                Logging.LogWarn("Config file {0} created from template {1}", target, template);
             }
         }
 
-        public void Execute(CliCommand command)
-        {
-            switch (command.Command)
-            {
-                case "Create":
-                    Create();
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        public void ShowHelp(CliCommand command)
+        [CliCommand("Help", "Shows help for module commands")]
+        public void ShowHelp()
         {
             throw new System.NotImplementedException();
         }

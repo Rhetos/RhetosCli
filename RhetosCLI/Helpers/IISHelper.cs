@@ -25,13 +25,10 @@ namespace RhetosCLI.Helpers
 
         private static bool IsUserAdmin()
         {
-            
-                WindowsIdentity identity = WindowsIdentity.GetCurrent();
-                WindowsPrincipal principal = new WindowsPrincipal(identity);
-                return principal.IsInRole(WindowsBuiltInRole.Administrator);
-            
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            WindowsPrincipal principal = new WindowsPrincipal(identity);
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
-        
 
         public static void CreateWebSite(string appName, string appPoolName, string userName, string password, string path, bool enable32bit, bool enableWindowsAuth)
         {
@@ -74,7 +71,7 @@ namespace RhetosCLI.Helpers
                 //must commit before changing security mode
                 serverManager.CommitChanges();
                 SetAuthMode(enableWindowsAuth, serverManager, iisAppName, app);
-                Logging.LogInfo("App {0} created, it is using {1} app pool.",appName, appPoolName);
+                Logging.LogInfo("App {0} created, it is using {1} app pool.", appName, appPoolName);
             }
             else
             {
@@ -95,7 +92,6 @@ namespace RhetosCLI.Helpers
 
                 ///TODO If is is not possible to use Windows domain account, the Rhetos service can be set up to use ApplicationPoolIdentity in a development environment:
                 ///TODO Skip the following steps if you are using a Windows domain account.
-
                 ///TODO Modify the RhetosAppPool to use built-in account "ApplicationPoolIdentity", instead of the developers domain account(Advanced Settings => Identity). This is the default user for a new app pool.
             }
             else

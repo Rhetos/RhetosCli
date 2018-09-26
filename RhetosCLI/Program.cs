@@ -1,11 +1,7 @@
 using NLog;
-using RhetosCLI.Attributes;
-using RhetosCLI.Commands;
 using RhetosCLI.Helpers;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 
 namespace RhetosCLI
@@ -19,61 +15,50 @@ namespace RhetosCLI
                 Logging.Logger = LogManager.GetCurrentClassLogger();
                 Logging.LogInfo("Rhetos CLI version {0}", Assembly.GetExecutingAssembly().GetName().Version);
                 CreateCacheFolder();
-                //TODO implement help and command discovery //var allCommands = LoadAllCommands();
+                var commands = MiscHelpers.LoadAllCommands();
+                var command = MiscHelpers.ParseCommandLine(args);
 
-                var command = ParseCommandLine(args);
-
-                if (string.IsNullOrEmpty(command.Command))
+                if (string.Equals(command.Module, "help", StringComparison.OrdinalIgnoreCase))
                 {
-                    //ShowHelp
-                    //Generate help from all commands
-                    Console.WriteLine ("Showing Help");
+                    Logging.LogInfo("Usage RhetosCli [Module] [Command] [Parameters]");
+                    Logging.LogInfo("For help use RhetosCli help or RhetosCli [module] help");
                 }
                 else
                 {
-                    //Executecommand
-                    var cmd = new Rhetos();
-                    MiscHelpers.SetParams(cmd, command);
-                    cmd.Execute(command);
+                    if (MiscHelpers.ResolveCommand(commands, command))
+                    {
+                        var cmd = Activator.CreateInstance(command.Type);
+                        MiscHelpers.SetParams(cmd, command);
+                        var methodInfo = cmd.GetType().GetMethod(command.Method);
+                        methodInfo.Invoke(cmd, null);
+                    }
+                    else
+                    {
+                        Logging.LogFatal("Invalid command specified. Aborting.");
+                        Logging.LogInfo("Usage RhetosCli [Module] [Command] [Parameters]");
+                        Logging.LogInfo("For help use RhetosCli help or RhetosCli [module] help");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Logging.LogFatal(ex, "" );
+                Logging.LogFatal(ex, "");
             }
             finally
             {
                 MiscHelpers.WriteLine("Press key to exit   ");
-                Console.ReadKey();
+                if (MiscHelpers.IsInteractive())
+                {
+                    Console.ReadKey();
+                }
             }
         }
 
         private static void CreateCacheFolder()
         {
             var cacheDir = MiscHelpers.GetCachePath();
-            Logging.LogInfo("Checking for cache dir at {0}", cacheDir);
+            Logging.LogTrace("Checking for cache dir at {0}", cacheDir);
             Directory.CreateDirectory(cacheDir);
-        }
-
-        private static CliCommand ParseCommandLine(string[] args)
-        {
-            var cmdParams = new CliCommand();
-
-            if (args.Length>0)
-            {
-                cmdParams.Command = args[0];
-                foreach (var arg in args.Skip(1))
-                {
-                    var value = arg.Split('=');
-                    cmdParams.Parameters.Add(value[0].ToUpper(), value[1]);
-                }
-            }
-            return cmdParams;
-        }
-
-        private static List<Type> LoadAllCommands()
-        {
-            return  Assembly.GetExecutingAssembly().GetExportedTypes().Where(t=>t.GetCustomAttribute<CliCommandAttribute>() != null).ToList();
         }
     }
 }
