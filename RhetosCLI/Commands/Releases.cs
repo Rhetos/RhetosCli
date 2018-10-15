@@ -22,7 +22,7 @@ namespace RhetosCLI.Commands
             RhetosVersion = version;
         }
 
-        [CliCommand("List ", "List all rhetos releases")]
+        [CliCommand("List", "List all rhetos releases")]
         public void ListReleases()
         {
             var result = new List<string>();
